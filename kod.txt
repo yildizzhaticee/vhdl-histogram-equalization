@@ -1,0 +1,86 @@
+library IEEE;
+use IEEE.STD_LOGIC_1164.ALL;
+use ieee.numeric_std.all;
+use STD.textio.all;
+use ieee.std_logic_textio.all;
+
+
+entity histogram_esbas is
+   port( clk : in STD_LOGIC;
+           reset : in STD_LOGIC;
+           start_processing : in STD_LOGIC);
+end histogram_esbas;
+
+
+architecture behavioral of histogram_esbas is
+    file file_vectors : text ;
+    file file_results :  text;
+    file file_results2 :  text;   
+    type histogram_arr is array (integer range <>) of integer;
+    signal histogram : histogram_arr(0 to 255) := (others => 0);
+    signal kumulatif : histogram_arr(0 to 255) := (others => 0);
+    signal normalize : histogram_arr(0 to 255) := (others => 0);
+    begin
+    process(start_processing, reset)
+        variable v_iline : line;
+        variable v_oline: line;
+         variable v_oline2: line;
+        variable term : integer; 
+         variable term2 : integer; 
+        type histogram_arr is array (integer range <>) of integer;
+        variable  temp : histogram_arr(0 to 255) := (others => 0);
+        variable  temp_cdf : histogram_arr(0 to 255) := (others => 0);
+        variable  temp_norm : histogram_arr(0 to 255) := (others => 0);
+       variable  norm_son : histogram_arr(0 to 255) := (others => 0);
+        variable sum:integer:=0;
+     begin
+      if reset ='1' then
+            --ilgili başlangıç işlemleri yapılabilir burada.
+        elsif  start_processing='1' then
+            --if  rising_edge(clk) then
+                 --Dosyayı aç
+                file_open(file_vectors,"C:\Users\hatic\Desktop\proje\wiki.txt",read_mode);
+                --file_open(file_vectors,"wiki.txt",read_mode);
+                 --file_open(file_results,"output.txt",write_mode);
+                file_open(file_results,"C:\Users\hatic\Desktop\proje\output.txt",write_mode);
+        
+             while not endfile(file_vectors) loop 
+             readline(file_vectors, v_iline);        
+             read(v_iline, term);
+             temp(term) := temp(term) +1; 
+       
+    end loop; 
+    --kumulatif histogram
+                  for i in 0 to 255 loop
+                   histogram(i) <= temp(i);
+                    sum:=sum+temp(i);
+                    temp_cdf(i):=sum; 
+                    kumulatif(i)<=temp_cdf(i);   
+                   end loop;
+    
+   
+  --normalize histogram
+                for i in 0 to 255 loop
+                 temp_norm(i):=((temp_cdf(i)-1)*255/(699392-1));
+                 -- temp_norm(i):=((temp_cdf(i)-39)*255/(237357-39));
+                   term2:=temp_norm(i);
+                   norm_son(term2):=temp(i);
+                   normalize(i)<=temp_norm(i); 
+                      
+                end loop;
+                             
+                  -- dosyaya veri yazma 
+                for i in 0 to 255 loop                   
+            --write(v_oline, temp(i));
+           --write(v_oline, temp_norm(i));
+            write(v_oline, norm_son(i));
+            writeline(file_results, v_oline);           
+        end loop;  
+        file_close(file_vectors);  
+        file_close(file_results);     
+end if;
+end process;
+        --dosyaları kapat
+        file_close(file_vectors);
+        file_close(file_results);
+end Behavioral;
